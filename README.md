@@ -39,6 +39,9 @@ export default ({ env }) => ({
 
 That's it. The global middleware registers automatically and applies to all `/api/*` and `/graphql` routes with default settings (100 requests per minute, in-memory store).
 
+> [!WARNING]
+> The default in-memory store is **not shared across server instances**. It is suitable for development and single-process deployments only. For production clusters, configure [Redis](#redis-setup).
+
 ## Configuration
 
 All options are optional. Pass them under `config`:
@@ -220,6 +223,9 @@ config: {
 ```
 
 ## Redis Setup
+
+> [!NOTE]
+> Redis is strongly recommended for production. Without it, each server process maintains its own counters, so rate limits won't be enforced correctly behind a load balancer.
 
 ### Connection URL
 
