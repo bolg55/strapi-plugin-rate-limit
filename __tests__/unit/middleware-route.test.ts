@@ -38,6 +38,7 @@ function mockService(overrides: Record<string, any> = {}) {
     shouldWarn: overrides.shouldWarn || vi.fn(() => false),
     isAllowlisted: overrides.isAllowlisted || vi.fn(() => false),
     isExcluded: vi.fn(() => false),
+    recordEvent: overrides.recordEvent || vi.fn(),
   };
 }
 
@@ -172,6 +173,48 @@ describe('Route Rate Limit Middleware', () => {
     await middleware(ctx, next);
     expect(next).toHaveBeenCalled();
     expect(strapi.log.error).toHaveBeenCalled();
+  });
+
+  it('should record a blocked event on 429', async () => {
+    service.consume = vi.fn(async () => ({
+      allowed: false,
+      res: { remainingPoints: 0, msBeforeNext: 30000, consumedPoints: 101 },
+      limit: 100,
+    }));
+    const ctx = mockCtx({
+      state: {
+        auth: { strategy: { name: 'api-token' }, credentials: { id: 1 } },
+      },
+    });
+    await middleware(ctx, next);
+    expect(service.recordEvent).toHaveBeenCalledWith({
+      type: 'blocked',
+      clientKey: 'token:1',
+      path: '/api/articles',
+      source: 'route',
+      consumedPoints: 101,
+      limit: 100,
+      msBeforeNext: 30000,
+    });
+  });
+
+  it('should record a warning event when shouldWarn returns true', async () => {
+    service.shouldWarn = vi.fn(() => true);
+    const ctx = mockCtx({
+      state: {
+        auth: { strategy: { name: 'api-token' }, credentials: { id: 1 } },
+      },
+    });
+    await middleware(ctx, next);
+    expect(service.recordEvent).toHaveBeenCalledWith({
+      type: 'warning',
+      clientKey: 'token:1',
+      path: '/api/articles',
+      source: 'route',
+      consumedPoints: 1,
+      limit: 100,
+      msBeforeNext: 60000,
+    });
   });
 
   it('should fire threshold warning with limiter-specific window', async () => {

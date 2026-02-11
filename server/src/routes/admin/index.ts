@@ -9,5 +9,13 @@ export default () => ({
         policies: ['admin::isAuthenticatedAdmin'],
       },
     },
+    {
+      method: 'GET',
+      path: '/events',
+      handler: 'controller.getEvents',
+      config: {
+        policies: ['admin::isAuthenticatedAdmin'],
+      },
+    },
   ],
 });

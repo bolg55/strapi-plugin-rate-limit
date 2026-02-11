@@ -63,6 +63,15 @@ export default function createGlobalRateLimit(strapi: Core.Strapi) {
           strapi.log.warn(
             `${PREFIX} IP ${ip} has consumed ${result.res.consumedPoints}/${result.limit} requests.`
           );
+          service.recordEvent({
+            type: 'warning',
+            clientKey: `ip:${ip}`,
+            path: normalizedPath,
+            source: 'global',
+            consumedPoints: result.res.consumedPoints,
+            limit: result.limit,
+            msBeforeNext: result.res.msBeforeNext,
+          });
         }
 
         return next();
@@ -78,6 +87,15 @@ export default function createGlobalRateLimit(strapi: Core.Strapi) {
         'X-RateLimit-Reset',
         String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000))
       );
+      service.recordEvent({
+        type: 'blocked',
+        clientKey: `ip:${ip}`,
+        path: normalizedPath,
+        source: 'global',
+        consumedPoints: result.res.consumedPoints,
+        limit: result.limit,
+        msBeforeNext: result.res.msBeforeNext,
+      });
     } catch (error) {
       strapi.log.error(`${PREFIX} Global middleware error: ${error}`);
       return next();

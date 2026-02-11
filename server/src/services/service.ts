@@ -9,10 +9,17 @@ import type { RateLimiterAbstract } from 'rate-limiter-flexible';
 import Redis from 'ioredis';
 import ms from 'ms';
 import picomatch from 'picomatch';
-import type { PluginConfig, ResolvedLimiter, ConsumeResult, PluginStatus } from '../types';
+import type {
+  PluginConfig,
+  ResolvedLimiter,
+  ConsumeResult,
+  PluginStatus,
+  RateLimitEvent,
+} from '../types';
 
 const PREFIX = '[strapi-plugin-rate-limit]';
 const MAX_WARNED_KEYS = 10000;
+const EVENT_BUFFER_CAPACITY = 100;
 
 const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
   let enabled = false;
@@ -29,6 +36,10 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
   let config: PluginConfig | null = null;
   let defaultIntervalMs = 0;
   const warnedKeys = new Map<string, number>();
+  const eventBuffer: (RateLimitEvent | null)[] = new Array(EVENT_BUFFER_CAPACITY).fill(null);
+  let eventWriteIndex = 0;
+  let eventIdCounter = 0;
+  let eventTotal = 0;
 
   /**
    * Optionally wrap a limiter in BurstyRateLimiter if burst config is enabled.
@@ -340,6 +351,27 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
       }
 
       return false;
+    },
+
+    recordEvent(event: Omit<RateLimitEvent, 'id' | 'timestamp'>): void {
+      const entry: RateLimitEvent = {
+        ...event,
+        id: ++eventIdCounter,
+        timestamp: new Date().toISOString(),
+      };
+      eventBuffer[eventWriteIndex] = entry;
+      eventWriteIndex = (eventWriteIndex + 1) % EVENT_BUFFER_CAPACITY;
+      eventTotal++;
+    },
+
+    getRecentEvents(): { events: RateLimitEvent[]; total: number; capacity: number } {
+      const events: RateLimitEvent[] = [];
+      for (let i = 0; i < EVENT_BUFFER_CAPACITY; i++) {
+        const idx = (eventWriteIndex - 1 - i + EVENT_BUFFER_CAPACITY) % EVENT_BUFFER_CAPACITY;
+        const entry = eventBuffer[idx];
+        if (entry) events.push(entry);
+      }
+      return { events, total: eventTotal, capacity: EVENT_BUFFER_CAPACITY };
     },
 
     disconnect(): void {

@@ -58,6 +58,15 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
           strapi.log.warn(
             `${PREFIX} ${clientKey} has consumed ${result.res.consumedPoints}/${result.limit} requests.`
           );
+          service.recordEvent({
+            type: 'warning',
+            clientKey,
+            path: normalizedPath,
+            source: 'route',
+            consumedPoints: result.res.consumedPoints,
+            limit: result.limit,
+            msBeforeNext: result.res.msBeforeNext,
+          });
         }
 
         return next();
@@ -73,6 +82,15 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
         'X-RateLimit-Reset',
         String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000))
       );
+      service.recordEvent({
+        type: 'blocked',
+        clientKey,
+        path: normalizedPath,
+        source: 'route',
+        consumedPoints: result.res.consumedPoints,
+        limit: result.limit,
+        msBeforeNext: result.res.msBeforeNext,
+      });
     } catch (error) {
       strapi.log.error(`${PREFIX} Route middleware error: ${error}`);
       return next();

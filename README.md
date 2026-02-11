@@ -17,7 +17,7 @@ Production-ready rate limiting for Strapi 5 — IP-based, identity-aware, with o
 - Path exclusion via glob patterns
 - Threshold warnings in Strapi logs
 - Standard `X-RateLimit-*` response headers
-- Admin dashboard showing current status
+- Admin dashboard with real-time event monitoring
 
 ## Installation
 
@@ -289,7 +289,14 @@ The 429 response body follows the Strapi error format:
 
 ## Admin Dashboard
 
-The plugin adds a status panel in the Strapi admin under **Plugins → Strapi Rate Limiter**. It shows the current strategy (Memory / Redis), connection status, default limits, number of custom rules, and allowlist counts.
+The plugin adds a dashboard in the Strapi admin under **Plugins → Rate Limiter**. It includes:
+
+- **Status overview** — strategy (Memory/Redis with connection status), default limits, custom rule count, and allowlist counts
+- **Event monitoring** — a live table of recent blocked and warning events showing the client, path, source, usage, and reset time
+- **Auto-refresh** — the dashboard polls every 10 seconds for new data
+- **Disabled state** — when the plugin is not enabled, the dashboard shows a helpful message instead of an error
+
+Events are stored in an in-memory ring buffer (last 100 entries) and are recorded whenever a request is blocked (429) or crosses the warning threshold. This works with both memory and Redis strategies.
 
 ## License
 

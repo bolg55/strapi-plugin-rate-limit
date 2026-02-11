@@ -38,6 +38,7 @@ function mockService(overrides: Record<string, any> = {}) {
       })),
     shouldWarn: overrides.shouldWarn || vi.fn(() => false),
     isAllowlisted: vi.fn(() => false),
+    recordEvent: overrides.recordEvent || vi.fn(),
   };
 }
 
@@ -175,6 +176,40 @@ describe('Global Rate Limit Middleware', () => {
     const ctx = mockCtx({ path: '/api/auth/local' });
     await middleware(ctx, next);
     expect(ctx.set).toHaveBeenCalledWith('X-RateLimit-Limit', '5');
+  });
+
+  it('should record a blocked event on 429', async () => {
+    service.consume = vi.fn(async () => ({
+      allowed: false,
+      res: { remainingPoints: 0, msBeforeNext: 30000, consumedPoints: 101 },
+      limit: 100,
+    }));
+    const ctx = mockCtx({ path: '/api/articles' });
+    await middleware(ctx, next);
+    expect(service.recordEvent).toHaveBeenCalledWith({
+      type: 'blocked',
+      clientKey: 'ip:127.0.0.1',
+      path: '/api/articles',
+      source: 'global',
+      consumedPoints: 101,
+      limit: 100,
+      msBeforeNext: 30000,
+    });
+  });
+
+  it('should record a warning event when shouldWarn returns true', async () => {
+    service.shouldWarn = vi.fn(() => true);
+    const ctx = mockCtx({ path: '/api/articles' });
+    await middleware(ctx, next);
+    expect(service.recordEvent).toHaveBeenCalledWith({
+      type: 'warning',
+      clientKey: 'ip:127.0.0.1',
+      path: '/api/articles',
+      source: 'global',
+      consumedPoints: 1,
+      limit: 100,
+      msBeforeNext: 60000,
+    });
   });
 
   it('should NOT check token/user allowlists', async () => {

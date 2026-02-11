@@ -41,3 +41,17 @@ export interface PluginStatus {
   rulesCount: number;
   allowlistCounts: { ips: number; tokens: number; users: number };
 }
+
+export type RateLimitEventType = 'blocked' | 'warning';
+
+export interface RateLimitEvent {
+  id: number;
+  timestamp: string;
+  type: RateLimitEventType;
+  clientKey: string;
+  path: string;
+  source: 'global' | 'route';
+  consumedPoints: number;
+  limit: number;
+  msBeforeNext: number;
+}
