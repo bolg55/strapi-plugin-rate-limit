@@ -10,9 +10,7 @@ export default function createGlobalRateLimit(strapi: Core.Strapi) {
     try {
       // Path normalization: strip trailing slash
       const normalizedPath =
-        ctx.path.endsWith('/') && ctx.path.length > 1
-          ? ctx.path.slice(0, -1)
-          : ctx.path;
+        ctx.path.endsWith('/') && ctx.path.length > 1 ? ctx.path.slice(0, -1) : ctx.path;
 
       // Path filter: only content API paths
       if (!normalizedPath.startsWith('/api/') && normalizedPath !== '/graphql') {
@@ -55,11 +53,16 @@ export default function createGlobalRateLimit(strapi: Core.Strapi) {
         // Set rate limit headers
         ctx.set('X-RateLimit-Limit', String(result.limit));
         ctx.set('X-RateLimit-Remaining', String(result.res.remainingPoints));
-        ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000)));
+        ctx.set(
+          'X-RateLimit-Reset',
+          String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000))
+        );
 
         // F2: Use per-rule intervalMs instead of global default interval
         if (service.shouldWarn(`ip:${ip}`, result.res.consumedPoints, result.limit, intervalMs)) {
-          strapi.log.warn(`${PREFIX} IP ${ip} has consumed ${result.res.consumedPoints}/${result.limit} requests.`);
+          strapi.log.warn(
+            `${PREFIX} IP ${ip} has consumed ${result.res.consumedPoints}/${result.limit} requests.`
+          );
         }
 
         return next();
@@ -71,7 +74,10 @@ export default function createGlobalRateLimit(strapi: Core.Strapi) {
       ctx.set('Retry-After', String(Math.round(result.res.msBeforeNext / 1000) || 1));
       ctx.set('X-RateLimit-Limit', String(result.limit));
       ctx.set('X-RateLimit-Remaining', '0');
-      ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000)));
+      ctx.set(
+        'X-RateLimit-Reset',
+        String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000))
+      );
     } catch (error) {
       strapi.log.error(`${PREFIX} Global middleware error: ${error}`);
       return next();

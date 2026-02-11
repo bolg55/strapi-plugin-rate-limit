@@ -29,11 +29,13 @@ function mockService(overrides: Record<string, any> = {}) {
     },
     isExcluded: overrides.isExcluded || vi.fn(() => false),
     resolve: overrides.resolve || vi.fn(() => ({ limiter: {}, limit: 100, intervalMs: 60000 })),
-    consume: overrides.consume || vi.fn(async () => ({
-      allowed: true,
-      res: { remainingPoints: 99, msBeforeNext: 60000, consumedPoints: 1 },
-      limit: 100,
-    })),
+    consume:
+      overrides.consume ||
+      vi.fn(async () => ({
+        allowed: true,
+        res: { remainingPoints: 99, msBeforeNext: 60000, consumedPoints: 1 },
+        limit: 100,
+      })),
     shouldWarn: overrides.shouldWarn || vi.fn(() => false),
     isAllowlisted: vi.fn(() => false),
   };
@@ -135,7 +137,9 @@ describe('Global Rate Limit Middleware', () => {
   });
 
   it('should fail open on unexpected error', async () => {
-    service.consume = vi.fn(async () => { throw new Error('boom'); });
+    service.consume = vi.fn(async () => {
+      throw new Error('boom');
+    });
     const ctx = mockCtx();
     await middleware(ctx, next);
     expect(next).toHaveBeenCalled();

@@ -56,7 +56,9 @@ export default {
   validator(config: PluginConfig): void {
     // defaults.limit
     if (!Number.isInteger(config.defaults.limit) || config.defaults.limit <= 0) {
-      throw new Error(`${PREFIX} defaults.limit must be a positive integer. Got ${config.defaults.limit}.`);
+      throw new Error(
+        `${PREFIX} defaults.limit must be a positive integer. Got ${config.defaults.limit}.`
+      );
     }
 
     // defaults.interval
@@ -64,10 +66,14 @@ export default {
 
     // defaults.blockDuration
     if (typeof config.defaults.blockDuration !== 'number' || config.defaults.blockDuration < 0) {
-      throw new Error(`${PREFIX} defaults.blockDuration must be a number >= 0. Got ${config.defaults.blockDuration}.`);
+      throw new Error(
+        `${PREFIX} defaults.blockDuration must be a number >= 0. Got ${config.defaults.blockDuration}.`
+      );
     }
     if (config.defaults.blockDuration > 86400) {
-      throw new Error(`${PREFIX} defaults.blockDuration must be <= 86400 (24 hours). Got ${config.defaults.blockDuration}.`);
+      throw new Error(
+        `${PREFIX} defaults.blockDuration must be <= 86400 (24 hours). Got ${config.defaults.blockDuration}.`
+      );
     }
 
     // redis mutual exclusivity
@@ -77,8 +83,13 @@ export default {
 
     // redis.url
     if (config.redis.url !== undefined && config.redis.url !== null) {
-      if (typeof config.redis.url !== 'string' || (!config.redis.url.startsWith('redis://') && !config.redis.url.startsWith('rediss://'))) {
-        throw new Error(`${PREFIX} redis.url must start with 'redis://' or 'rediss://'. Got '${config.redis.url}'.`);
+      if (
+        typeof config.redis.url !== 'string' ||
+        (!config.redis.url.startsWith('redis://') && !config.redis.url.startsWith('rediss://'))
+      ) {
+        throw new Error(
+          `${PREFIX} redis.url must start with 'redis://' or 'rediss://'. Got '${config.redis.url}'.`
+        );
       }
     }
 
@@ -91,8 +102,14 @@ export default {
 
     // redis.port
     if (config.redis.port !== undefined && config.redis.port !== null) {
-      if (!Number.isInteger(config.redis.port) || config.redis.port < 1 || config.redis.port > 65535) {
-        throw new Error(`${PREFIX} redis.port must be an integer between 1 and 65535. Got ${config.redis.port}.`);
+      if (
+        !Number.isInteger(config.redis.port) ||
+        config.redis.port < 1 ||
+        config.redis.port > 65535
+      ) {
+        throw new Error(
+          `${PREFIX} redis.port must be an integer between 1 and 65535. Got ${config.redis.port}.`
+        );
       }
     }
 
@@ -103,7 +120,9 @@ export default {
           throw new Error(`${PREFIX} rules[${i}].path must be a non-empty string.`);
         }
         if (!Number.isInteger(rule.limit) || rule.limit <= 0) {
-          throw new Error(`${PREFIX} rules[${i}].limit must be a positive integer. Got ${rule.limit}.`);
+          throw new Error(
+            `${PREFIX} rules[${i}].limit must be a positive integer. Got ${rule.limit}.`
+          );
         }
         validateMsInterval(rule.interval, `rules[${i}].interval`);
       });
@@ -113,7 +132,9 @@ export default {
     const coerceToStringArray = (arr: unknown[], fieldName: string): string[] => {
       return arr.map((v, i) => {
         if (typeof v !== 'string') {
-          console.warn(`${PREFIX} ${fieldName}[${i}] is not a string, coercing ${typeof v} to string.`);
+          console.warn(
+            `${PREFIX} ${fieldName}[${i}] is not a string, coercing ${typeof v} to string.`
+          );
           return String(v);
         }
         return v;
@@ -132,10 +153,17 @@ export default {
 
     // thresholdWarning
     if (typeof config.thresholdWarning !== 'number') {
-      throw new Error(`${PREFIX} thresholdWarning must be a number. Got ${typeof config.thresholdWarning}.`);
+      throw new Error(
+        `${PREFIX} thresholdWarning must be a number. Got ${typeof config.thresholdWarning}.`
+      );
     }
-    if (config.thresholdWarning !== 0 && (config.thresholdWarning <= 0 || config.thresholdWarning > 1)) {
-      throw new Error(`${PREFIX} thresholdWarning must be 0 (disabled) or between 0 (exclusive) and 1 (inclusive). Got ${config.thresholdWarning}.`);
+    if (
+      config.thresholdWarning !== 0 &&
+      (config.thresholdWarning <= 0 || config.thresholdWarning > 1)
+    ) {
+      throw new Error(
+        `${PREFIX} thresholdWarning must be 0 (disabled) or between 0 (exclusive) and 1 (inclusive). Got ${config.thresholdWarning}.`
+      );
     }
 
     // exclude
@@ -153,7 +181,9 @@ export default {
       throw new Error(`${PREFIX} keyPrefix must be a non-empty string. Got '${config.keyPrefix}'.`);
     }
     if (!/^[a-zA-Z0-9_:-]+$/.test(config.keyPrefix)) {
-      throw new Error(`${PREFIX} keyPrefix must contain only alphanumeric characters, underscores, colons, and hyphens. Got '${config.keyPrefix}'.`);
+      throw new Error(
+        `${PREFIX} keyPrefix must contain only alphanumeric characters, underscores, colons, and hyphens. Got '${config.keyPrefix}'.`
+      );
     }
 
     // cloudflare
@@ -168,16 +198,22 @@ export default {
 
     // execEvenlyMinDelayMs
     if (typeof config.execEvenlyMinDelayMs !== 'number' || config.execEvenlyMinDelayMs < 0) {
-      throw new Error(`${PREFIX} execEvenlyMinDelayMs must be a number >= 0. Got ${config.execEvenlyMinDelayMs}.`);
+      throw new Error(
+        `${PREFIX} execEvenlyMinDelayMs must be a number >= 0. Got ${config.execEvenlyMinDelayMs}.`
+      );
     }
 
     // burst
     if (typeof config.burst?.enabled !== 'boolean') {
-      throw new Error(`${PREFIX} burst.enabled must be a boolean. Got ${typeof config.burst?.enabled}.`);
+      throw new Error(
+        `${PREFIX} burst.enabled must be a boolean. Got ${typeof config.burst?.enabled}.`
+      );
     }
     if (config.burst.enabled) {
       if (!Number.isInteger(config.burst.points) || config.burst.points <= 0) {
-        throw new Error(`${PREFIX} burst.points must be a positive integer when burst is enabled. Got ${config.burst.points}.`);
+        throw new Error(
+          `${PREFIX} burst.points must be a positive integer when burst is enabled. Got ${config.burst.points}.`
+        );
       }
       validateMsInterval(config.burst.duration, 'burst.duration');
     }

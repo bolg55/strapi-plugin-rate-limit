@@ -28,11 +28,13 @@ function mockService(overrides: Record<string, any> = {}) {
       exclude: [],
     },
     resolve: overrides.resolve || vi.fn(() => ({ limiter: {}, limit: 100, intervalMs: 60000 })),
-    consume: overrides.consume || vi.fn(async () => ({
-      allowed: true,
-      res: { remainingPoints: 99, msBeforeNext: 60000, consumedPoints: 1 },
-      limit: 100,
-    })),
+    consume:
+      overrides.consume ||
+      vi.fn(async () => ({
+        allowed: true,
+        res: { remainingPoints: 99, msBeforeNext: 60000, consumedPoints: 1 },
+        limit: 100,
+      })),
     shouldWarn: overrides.shouldWarn || vi.fn(() => false),
     isAllowlisted: overrides.isAllowlisted || vi.fn(() => false),
     isExcluded: vi.fn(() => false),
@@ -159,7 +161,9 @@ describe('Route Rate Limit Middleware', () => {
   });
 
   it('should fail open on unexpected error', async () => {
-    service.consume = vi.fn(async () => { throw new Error('boom'); });
+    service.consume = vi.fn(async () => {
+      throw new Error('boom');
+    });
     const ctx = mockCtx({
       state: {
         auth: { strategy: { name: 'api-token' }, credentials: { id: 1 } },

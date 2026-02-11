@@ -42,21 +42,31 @@ describe('Plugin Config', () => {
 
     // defaults.limit
     it('should throw for non-positive defaults.limit', () => {
-      expect(() => validator(makeConfig({ defaults: { limit: 0 } }))).toThrow('defaults.limit must be a positive integer');
-      expect(() => validator(makeConfig({ defaults: { limit: -1 } }))).toThrow('defaults.limit must be a positive integer');
+      expect(() => validator(makeConfig({ defaults: { limit: 0 } }))).toThrow(
+        'defaults.limit must be a positive integer'
+      );
+      expect(() => validator(makeConfig({ defaults: { limit: -1 } }))).toThrow(
+        'defaults.limit must be a positive integer'
+      );
     });
 
     it('should throw for non-integer defaults.limit', () => {
-      expect(() => validator(makeConfig({ defaults: { limit: 1.5 } }))).toThrow('defaults.limit must be a positive integer');
+      expect(() => validator(makeConfig({ defaults: { limit: 1.5 } }))).toThrow(
+        'defaults.limit must be a positive integer'
+      );
     });
 
     // defaults.interval
     it('should throw for invalid defaults.interval', () => {
-      expect(() => validator(makeConfig({ defaults: { interval: 'invalid' } }))).toThrow("Invalid defaults.interval 'invalid'");
+      expect(() => validator(makeConfig({ defaults: { interval: 'invalid' } }))).toThrow(
+        "Invalid defaults.interval 'invalid'"
+      );
     });
 
     it('should throw for compound interval with helpful message', () => {
-      expect(() => validator(makeConfig({ defaults: { interval: '1h30m' } }))).toThrow('Compound intervals');
+      expect(() => validator(makeConfig({ defaults: { interval: '1h30m' } }))).toThrow(
+        'Compound intervals'
+      );
     });
 
     it('should pass for valid intervals', () => {
@@ -67,7 +77,9 @@ describe('Plugin Config', () => {
 
     // defaults.blockDuration
     it('should throw for negative blockDuration', () => {
-      expect(() => validator(makeConfig({ defaults: { blockDuration: -1 } }))).toThrow('defaults.blockDuration must be a number >= 0');
+      expect(() => validator(makeConfig({ defaults: { blockDuration: -1 } }))).toThrow(
+        'defaults.blockDuration must be a number >= 0'
+      );
     });
 
     it('should pass for blockDuration: 0', () => {
@@ -75,7 +87,9 @@ describe('Plugin Config', () => {
     });
 
     it('should throw for blockDuration > 86400', () => {
-      expect(() => validator(makeConfig({ defaults: { blockDuration: 100000 } }))).toThrow('defaults.blockDuration must be <= 86400');
+      expect(() => validator(makeConfig({ defaults: { blockDuration: 100000 } }))).toThrow(
+        'defaults.blockDuration must be <= 86400'
+      );
     });
 
     // redis mutual exclusivity
@@ -87,25 +101,37 @@ describe('Plugin Config', () => {
 
     // redis.url
     it('should throw for invalid redis.url', () => {
-      expect(() => validator(makeConfig({ redis: { url: 'http://invalid' } }))).toThrow("redis.url must start with 'redis://' or 'rediss://'");
+      expect(() => validator(makeConfig({ redis: { url: 'http://invalid' } }))).toThrow(
+        "redis.url must start with 'redis://' or 'rediss://'"
+      );
     });
 
     it('should pass for valid redis.url with rediss://', () => {
-      expect(() => validator(makeConfig({ redis: { url: 'rediss://user:pass@host:6379' } }))).not.toThrow();
+      expect(() =>
+        validator(makeConfig({ redis: { url: 'rediss://user:pass@host:6379' } }))
+      ).not.toThrow();
     });
 
     it('should pass for valid redis.url with redis://', () => {
-      expect(() => validator(makeConfig({ redis: { url: 'redis://localhost:6379' } }))).not.toThrow();
+      expect(() =>
+        validator(makeConfig({ redis: { url: 'redis://localhost:6379' } }))
+      ).not.toThrow();
     });
 
     // redis.port
     it('should throw for redis.port out of range', () => {
-      expect(() => validator(makeConfig({ redis: { host: 'localhost', port: 0 } }))).toThrow('redis.port must be an integer between 1 and 65535');
-      expect(() => validator(makeConfig({ redis: { host: 'localhost', port: 70000 } }))).toThrow('redis.port must be an integer between 1 and 65535');
+      expect(() => validator(makeConfig({ redis: { host: 'localhost', port: 0 } }))).toThrow(
+        'redis.port must be an integer between 1 and 65535'
+      );
+      expect(() => validator(makeConfig({ redis: { host: 'localhost', port: 70000 } }))).toThrow(
+        'redis.port must be an integer between 1 and 65535'
+      );
     });
 
     it('should throw for non-integer redis.port', () => {
-      expect(() => validator(makeConfig({ redis: { host: 'localhost', port: 1.5 } }))).toThrow('redis.port must be an integer between 1 and 65535');
+      expect(() => validator(makeConfig({ redis: { host: 'localhost', port: 1.5 } }))).toThrow(
+        'redis.port must be an integer between 1 and 65535'
+      );
     });
 
     // rules
@@ -129,8 +155,12 @@ describe('Plugin Config', () => {
 
     // thresholdWarning
     it('should throw for thresholdWarning outside 0-1 range', () => {
-      expect(() => validator(makeConfig({ thresholdWarning: 1.5 }))).toThrow('thresholdWarning must be 0 (disabled) or between 0');
-      expect(() => validator(makeConfig({ thresholdWarning: -0.5 }))).toThrow('thresholdWarning must be 0 (disabled) or between 0');
+      expect(() => validator(makeConfig({ thresholdWarning: 1.5 }))).toThrow(
+        'thresholdWarning must be 0 (disabled) or between 0'
+      );
+      expect(() => validator(makeConfig({ thresholdWarning: -0.5 }))).toThrow(
+        'thresholdWarning must be 0 (disabled) or between 0'
+      );
     });
 
     it('should pass for thresholdWarning: 0 (disabled)', () => {
@@ -150,22 +180,34 @@ describe('Plugin Config', () => {
 
     // cloudflare
     it('should throw for non-boolean cloudflare', () => {
-      expect(() => validator(makeConfig({ cloudflare: 'yes' as any }))).toThrow('cloudflare must be a boolean');
+      expect(() => validator(makeConfig({ cloudflare: 'yes' as any }))).toThrow(
+        'cloudflare must be a boolean'
+      );
     });
 
     // inMemoryBlock.duration
     it('should throw for invalid inMemoryBlock.duration', () => {
-      expect(() => validator(makeConfig({ inMemoryBlock: { enabled: true, consumedThreshold: 0, duration: 'bad' } }))).toThrow("Invalid inMemoryBlock.duration 'bad'");
+      expect(() =>
+        validator(
+          makeConfig({ inMemoryBlock: { enabled: true, consumedThreshold: 0, duration: 'bad' } })
+        )
+      ).toThrow("Invalid inMemoryBlock.duration 'bad'");
     });
 
     // keyPrefix
     it('should throw for empty keyPrefix', () => {
-      expect(() => validator(makeConfig({ keyPrefix: '' }))).toThrow('keyPrefix must be a non-empty string');
+      expect(() => validator(makeConfig({ keyPrefix: '' }))).toThrow(
+        'keyPrefix must be a non-empty string'
+      );
     });
 
     it('should throw for keyPrefix with invalid characters', () => {
-      expect(() => validator(makeConfig({ keyPrefix: 'rl space' }))).toThrow('keyPrefix must contain only alphanumeric');
-      expect(() => validator(makeConfig({ keyPrefix: 'rl/bad' }))).toThrow('keyPrefix must contain only alphanumeric');
+      expect(() => validator(makeConfig({ keyPrefix: 'rl space' }))).toThrow(
+        'keyPrefix must contain only alphanumeric'
+      );
+      expect(() => validator(makeConfig({ keyPrefix: 'rl/bad' }))).toThrow(
+        'keyPrefix must contain only alphanumeric'
+      );
     });
 
     it('should pass for valid keyPrefix with colons and hyphens', () => {
@@ -174,7 +216,9 @@ describe('Plugin Config', () => {
 
     // execEvenly
     it('should throw for non-boolean execEvenly', () => {
-      expect(() => validator(makeConfig({ execEvenly: 'yes' as any }))).toThrow('execEvenly must be a boolean');
+      expect(() => validator(makeConfig({ execEvenly: 'yes' as any }))).toThrow(
+        'execEvenly must be a boolean'
+      );
     });
 
     it('should pass for execEvenly: true', () => {
@@ -183,28 +227,40 @@ describe('Plugin Config', () => {
 
     // execEvenlyMinDelayMs
     it('should throw for negative execEvenlyMinDelayMs', () => {
-      expect(() => validator(makeConfig({ execEvenlyMinDelayMs: -1 }))).toThrow('execEvenlyMinDelayMs must be a number >= 0');
+      expect(() => validator(makeConfig({ execEvenlyMinDelayMs: -1 }))).toThrow(
+        'execEvenlyMinDelayMs must be a number >= 0'
+      );
     });
 
     // burst
     it('should throw for non-boolean burst.enabled', () => {
-      expect(() => validator(makeConfig({ burst: { enabled: 'yes' as any, points: 5, duration: '10s' } }))).toThrow('burst.enabled must be a boolean');
+      expect(() =>
+        validator(makeConfig({ burst: { enabled: 'yes' as any, points: 5, duration: '10s' } }))
+      ).toThrow('burst.enabled must be a boolean');
     });
 
     it('should throw for burst.points <= 0 when burst is enabled', () => {
-      expect(() => validator(makeConfig({ burst: { enabled: true, points: 0, duration: '10s' } }))).toThrow('burst.points must be a positive integer');
+      expect(() =>
+        validator(makeConfig({ burst: { enabled: true, points: 0, duration: '10s' } }))
+      ).toThrow('burst.points must be a positive integer');
     });
 
     it('should throw for invalid burst.duration when burst is enabled', () => {
-      expect(() => validator(makeConfig({ burst: { enabled: true, points: 5, duration: 'bad' } }))).toThrow("Invalid burst.duration 'bad'");
+      expect(() =>
+        validator(makeConfig({ burst: { enabled: true, points: 5, duration: 'bad' } }))
+      ).toThrow("Invalid burst.duration 'bad'");
     });
 
     it('should pass for valid burst config', () => {
-      expect(() => validator(makeConfig({ burst: { enabled: true, points: 10, duration: '30s' } }))).not.toThrow();
+      expect(() =>
+        validator(makeConfig({ burst: { enabled: true, points: 10, duration: '30s' } }))
+      ).not.toThrow();
     });
 
     it('should pass when burst is disabled with points: 0', () => {
-      expect(() => validator(makeConfig({ burst: { enabled: false, points: 0, duration: '10s' } }))).not.toThrow();
+      expect(() =>
+        validator(makeConfig({ burst: { enabled: false, points: 0, duration: '10s' } }))
+      ).not.toThrow();
     });
   });
 });

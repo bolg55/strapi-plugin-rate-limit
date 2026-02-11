@@ -1,5 +1,10 @@
 import type { Core } from '@strapi/strapi';
-import { RateLimiterMemory, RateLimiterRedis, RateLimiterRes, BurstyRateLimiter } from 'rate-limiter-flexible';
+import {
+  RateLimiterMemory,
+  RateLimiterRedis,
+  RateLimiterRes,
+  BurstyRateLimiter,
+} from 'rate-limiter-flexible';
 import type { RateLimiterAbstract } from 'rate-limiter-flexible';
 import Redis from 'ioredis';
 import ms from 'ms';
@@ -13,7 +18,12 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
   let enabled = false;
   let strategy: 'memory' | 'redis' | 'none' = 'none';
   let defaultLimiter: RateLimiterAbstract | null = null;
-  let ruleLimiters: Array<{ matcher: (path: string) => boolean; limiter: RateLimiterAbstract; limit: number; intervalMs: number }> = [];
+  let ruleLimiters: Array<{
+    matcher: (path: string) => boolean;
+    limiter: RateLimiterAbstract;
+    limit: number;
+    intervalMs: number;
+  }> = [];
   let excludeMatchers: Array<(path: string) => boolean> = [];
   let redisClient: Redis | null = null;
   let config: PluginConfig | null = null;
@@ -23,7 +33,11 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
   /**
    * Optionally wrap a limiter in BurstyRateLimiter if burst config is enabled.
    */
-  function maybeBurst(limiter: RateLimiterAbstract, keyPrefix: string, isRedis: boolean): RateLimiterAbstract {
+  function maybeBurst(
+    limiter: RateLimiterAbstract,
+    keyPrefix: string,
+    isRedis: boolean
+  ): RateLimiterAbstract {
     if (!config?.burst.enabled) return limiter;
     const burstDurationSec = ms(config.burst.duration as ms.StringValue) / 1000;
     const burstLimiter = isRedis
@@ -147,7 +161,9 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
             duration: durationSeconds,
             blockDuration,
             keyPrefix: `${config.keyPrefix}:default`,
-            inMemoryBlockOnConsumed: config.inMemoryBlock.enabled ? inMemoryBlockOnConsumed : undefined,
+            inMemoryBlockOnConsumed: config.inMemoryBlock.enabled
+              ? inMemoryBlockOnConsumed
+              : undefined,
             inMemoryBlockDuration: config.inMemoryBlock.enabled ? inMemoryBlockDuration : undefined,
             insuranceLimiter,
             ...execEvenlyOpts,
@@ -165,7 +181,9 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
               blockDuration, // F7: propagate blockDuration to per-rule limiters
               keyPrefix: `${config!.keyPrefix}:rule-${index}`,
               inMemoryBlockOnConsumed: config!.inMemoryBlock.enabled ? 2 * rule.limit : undefined,
-              inMemoryBlockDuration: config!.inMemoryBlock.enabled ? inMemoryBlockDuration : undefined,
+              inMemoryBlockDuration: config!.inMemoryBlock.enabled
+                ? inMemoryBlockDuration
+                : undefined,
               insuranceLimiter,
               ...execEvenlyOpts,
             });
@@ -228,14 +246,22 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
           return { limiter: rule.limiter, limit: rule.limit, intervalMs: rule.intervalMs };
         }
       }
-      return { limiter: defaultLimiter!, limit: config!.defaults.limit, intervalMs: defaultIntervalMs };
+      return {
+        limiter: defaultLimiter!,
+        limit: config!.defaults.limit,
+        intervalMs: defaultIntervalMs,
+      };
     },
 
     isExcluded(path: string): boolean {
       return excludeMatchers.some((matcher) => matcher(path));
     },
 
-    async consume(key: string, limiter: RateLimiterAbstract, limit: number): Promise<ConsumeResult> {
+    async consume(
+      key: string,
+      limiter: RateLimiterAbstract,
+      limit: number
+    ): Promise<ConsumeResult> {
       try {
         const res = await limiter.consume(key);
         return { allowed: true, res, limit };
@@ -279,7 +305,12 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
       return false;
     },
 
-    shouldWarn(key: string, consumedPoints: number, limit: number, windowDurationMs: number): boolean {
+    shouldWarn(
+      key: string,
+      consumedPoints: number,
+      limit: number,
+      windowDurationMs: number
+    ): boolean {
       if (!config || config.thresholdWarning === 0) {
         return false;
       }

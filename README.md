@@ -83,23 +83,23 @@ export default ({ env }) => ({
 
 #### `defaults`
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `limit` | `number` | `100` | Requests allowed per interval |
-| `interval` | `string` | `'1m'` | Time window (`'30s'`, `'1m'`, `'1h'`, etc.) |
-| `blockDuration` | `number` | `0` | Seconds to block after limit exceeded (0 = no block, max 86400) |
+| Option          | Type     | Default | Description                                                     |
+| --------------- | -------- | ------- | --------------------------------------------------------------- |
+| `limit`         | `number` | `100`   | Requests allowed per interval                                   |
+| `interval`      | `string` | `'1m'`  | Time window (`'30s'`, `'1m'`, `'1h'`, etc.)                     |
+| `blockDuration` | `number` | `0`     | Seconds to block after limit exceeded (0 = no block, max 86400) |
 
 #### `redis`
 
 Leave `redis` unconfigured to use the in-memory store. Provide either `url` **or** `host`/`port` — not both.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `url` | `string` | — | Redis connection URL (`redis://` or `rediss://`) |
-| `host` | `string` | — | Redis hostname (alternative to `url`) |
-| `port` | `number` | — | Redis port (1–65535) |
-| `password` | `string` | — | Redis password |
-| `tls` | `boolean` | `false` | Enable TLS (required for Upstash and most managed Redis) |
+| Option     | Type      | Default | Description                                              |
+| ---------- | --------- | ------- | -------------------------------------------------------- |
+| `url`      | `string`  | —       | Redis connection URL (`redis://` or `rediss://`)         |
+| `host`     | `string`  | —       | Redis hostname (alternative to `url`)                    |
+| `port`     | `number`  | —       | Redis port (1–65535)                                     |
+| `password` | `string`  | —       | Redis password                                           |
+| `tls`      | `boolean` | `false` | Enable TLS (required for Upstash and most managed Redis) |
 
 When Redis is configured, the plugin automatically creates an **insurance limiter** — an in-memory fallback that activates if Redis becomes unreachable, so rate limiting keeps working during outages.
 
@@ -112,18 +112,18 @@ rules: [
   { path: '/api/auth/**', limit: 5, interval: '15m' },
   { path: '/api/articles', limit: 50, interval: '1m' },
   { path: '/api/upload', limit: 10, interval: '1m' },
-]
+];
 ```
 
 The first matching rule wins. Unmatched paths fall back to `defaults`.
 
 #### `allowlist`
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `ips` | `string[]` | `[]` | IP addresses to bypass rate limiting |
-| `tokens` | `string[]` | `[]` | API token IDs to bypass rate limiting |
-| `users` | `string[]` | `[]` | User IDs to bypass rate limiting |
+| Option   | Type       | Default | Description                           |
+| -------- | ---------- | ------- | ------------------------------------- |
+| `ips`    | `string[]` | `[]`    | IP addresses to bypass rate limiting  |
+| `tokens` | `string[]` | `[]`    | API token IDs to bypass rate limiting |
+| `users`  | `string[]` | `[]`    | User IDs to bypass rate limiting      |
 
 Token and user allowlisting requires the [route-level middleware](#route-level-middleware).
 
@@ -132,44 +132,45 @@ Token and user allowlisting requires the [route-level middleware](#route-level-m
 Array of path patterns (glob) to skip entirely. Excluded paths receive no rate limiting and no headers.
 
 ```ts
-exclude: ['/api/health', '/api/metrics', '/api/webhooks/**']
+exclude: ['/api/health', '/api/metrics', '/api/webhooks/**'];
 ```
 
 #### `inMemoryBlock`
 
 Fast local blocking layer for Redis mode. When a client far exceeds the limit, subsequent requests are rejected from memory without hitting Redis.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `enabled` | `boolean` | `true` | Enable in-memory blocking |
-| `consumedThreshold` | `number` | `0` | Points consumed to trigger block (0 = 2× the limit) |
-| `duration` | `string` | `'1m'` | How long the in-memory block lasts |
+| Option              | Type      | Default | Description                                         |
+| ------------------- | --------- | ------- | --------------------------------------------------- |
+| `enabled`           | `boolean` | `true`  | Enable in-memory blocking                           |
+| `consumedThreshold` | `number`  | `0`     | Points consumed to trigger block (0 = 2× the limit) |
+| `duration`          | `string`  | `'1m'`  | How long the in-memory block lasts                  |
 
 #### Other Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `thresholdWarning` | `number` | `0.8` | Log a warning when usage hits this ratio (0–1, 0 = disabled) |
-| `keyPrefix` | `string` | `'rl'` | Prefix for rate limiter keys (useful when sharing a Redis instance) |
-| `cloudflare` | `boolean` | `false` | Use `CF-Connecting-IP` header for client IP |
-| `execEvenly` | `boolean` | `false` | Distribute delay evenly across requests instead of all at once |
-| `execEvenlyMinDelayMs` | `number` | `0` | Minimum delay (ms) between requests when `execEvenly` is on |
+| Option                 | Type      | Default | Description                                                         |
+| ---------------------- | --------- | ------- | ------------------------------------------------------------------- |
+| `thresholdWarning`     | `number`  | `0.8`   | Log a warning when usage hits this ratio (0–1, 0 = disabled)        |
+| `keyPrefix`            | `string`  | `'rl'`  | Prefix for rate limiter keys (useful when sharing a Redis instance) |
+| `cloudflare`           | `boolean` | `false` | Use `CF-Connecting-IP` header for client IP                         |
+| `execEvenly`           | `boolean` | `false` | Distribute delay evenly across requests instead of all at once      |
+| `execEvenlyMinDelayMs` | `number`  | `0`     | Minimum delay (ms) between requests when `execEvenly` is on         |
 
 #### `burst`
 
 Allows short bursts above the normal limit using a secondary token bucket.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `enabled` | `boolean` | `false` | Enable burst protection |
-| `points` | `number` | `0` | Extra points for the burst window |
-| `duration` | `string` | `'10s'` | Burst window duration |
+| Option     | Type      | Default | Description                       |
+| ---------- | --------- | ------- | --------------------------------- |
+| `enabled`  | `boolean` | `false` | Enable burst protection           |
+| `points`   | `number`  | `0`     | Extra points for the burst window |
+| `duration` | `string`  | `'10s'` | Burst window duration             |
 
 ## Route-Level Middleware
 
 The global middleware rate-limits by IP address. If you want **auth-aware** rate limiting (by API token or user ID), add the route-level middleware to specific routes.
 
 Identity resolution priority:
+
 1. **API Token** → `token:{id}`
 2. **Authenticated User** → `user:{id}`
 3. **IP** (fallback) → skipped (already handled by global middleware)
@@ -185,9 +186,7 @@ export default {
       path: '/articles',
       handler: 'article.create',
       config: {
-        middlewares: [
-          'plugin::strapi-plugin-rate-limit.rate-limit',
-        ],
+        middlewares: ['plugin::strapi-plugin-rate-limit.rate-limit'],
       },
     },
   ],
@@ -262,16 +261,16 @@ When Redis is active, an in-memory insurance limiter runs alongside it. If the R
 
 Every rate-limited response includes standard headers:
 
-| Header | Description |
-|--------|-------------|
-| `X-RateLimit-Limit` | Maximum requests allowed in the current window |
-| `X-RateLimit-Remaining` | Requests remaining in the current window |
-| `X-RateLimit-Reset` | Unix timestamp (seconds) when the window resets |
+| Header                  | Description                                     |
+| ----------------------- | ----------------------------------------------- |
+| `X-RateLimit-Limit`     | Maximum requests allowed in the current window  |
+| `X-RateLimit-Remaining` | Requests remaining in the current window        |
+| `X-RateLimit-Reset`     | Unix timestamp (seconds) when the window resets |
 
 When the limit is exceeded (HTTP 429), the response also includes:
 
-| Header | Description |
-|--------|-------------|
+| Header        | Description                     |
+| ------------- | ------------------------------- |
 | `Retry-After` | Seconds to wait before retrying |
 
 The 429 response body follows the Strapi error format:

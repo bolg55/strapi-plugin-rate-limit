@@ -31,9 +31,7 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
 
       // Normalize path
       const normalizedPath =
-        ctx.path.endsWith('/') && ctx.path.length > 1
-          ? ctx.path.slice(0, -1)
-          : ctx.path;
+        ctx.path.endsWith('/') && ctx.path.length > 1 ? ctx.path.slice(0, -1) : ctx.path;
 
       // Resolve limiter for this path (F2: now includes intervalMs)
       const { limiter, limit, intervalMs } = service.resolve(normalizedPath);
@@ -50,11 +48,16 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
         // Override X-RateLimit-* headers with identity-based values
         ctx.set('X-RateLimit-Limit', String(result.limit));
         ctx.set('X-RateLimit-Remaining', String(result.res.remainingPoints));
-        ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000)));
+        ctx.set(
+          'X-RateLimit-Reset',
+          String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000))
+        );
 
         // F2: Use per-rule intervalMs instead of global default interval
         if (service.shouldWarn(clientKey, result.res.consumedPoints, result.limit, intervalMs)) {
-          strapi.log.warn(`${PREFIX} ${clientKey} has consumed ${result.res.consumedPoints}/${result.limit} requests.`);
+          strapi.log.warn(
+            `${PREFIX} ${clientKey} has consumed ${result.res.consumedPoints}/${result.limit} requests.`
+          );
         }
 
         return next();
@@ -66,7 +69,10 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
       ctx.set('Retry-After', String(Math.round(result.res.msBeforeNext / 1000) || 1));
       ctx.set('X-RateLimit-Limit', String(result.limit));
       ctx.set('X-RateLimit-Remaining', '0');
-      ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000)));
+      ctx.set(
+        'X-RateLimit-Reset',
+        String(Math.ceil((Date.now() + result.res.msBeforeNext) / 1000))
+      );
     } catch (error) {
       strapi.log.error(`${PREFIX} Route middleware error: ${error}`);
       return next();

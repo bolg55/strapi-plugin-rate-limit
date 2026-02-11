@@ -48,7 +48,9 @@ const HomePage = () => {
     return (
       <Main>
         <Box padding={8}>
-          <Typography variant="alpha" tag="h1">Rate Limiter</Typography>
+          <Typography variant="alpha" tag="h1">
+            Rate Limiter
+          </Typography>
           <Box paddingTop={4}>
             <Typography textColor="danger600">{error || 'Unable to load status.'}</Typography>
           </Box>
@@ -61,14 +63,18 @@ const HomePage = () => {
     <Main>
       <Box padding={8}>
         <Flex gap={4} alignItems="center" paddingBottom={6}>
-          <Typography variant="alpha" tag="h1">Rate Limiter</Typography>
+          <Typography variant="alpha" tag="h1">
+            Rate Limiter
+          </Typography>
           <Badge active={status.enabled}>{status.enabled ? 'Active' : 'Disabled'}</Badge>
         </Flex>
 
         <Grid.Root gap={6}>
           <Grid.Item col={4} s={6} xs={12}>
             <Box padding={5} hasRadius background="neutral0" shadow="tableShadow">
-              <Typography variant="sigma" textColor="neutral600">Strategy</Typography>
+              <Typography variant="sigma" textColor="neutral600">
+                Strategy
+              </Typography>
               <Box paddingTop={2}>
                 <Typography variant="omega" fontWeight="bold">
                   {status.strategy.charAt(0).toUpperCase() + status.strategy.slice(1)}
@@ -80,7 +86,9 @@ const HomePage = () => {
           {status.strategy === 'redis' && (
             <Grid.Item col={4} s={6} xs={12}>
               <Box padding={5} hasRadius background="neutral0" shadow="tableShadow">
-                <Typography variant="sigma" textColor="neutral600">Redis</Typography>
+                <Typography variant="sigma" textColor="neutral600">
+                  Redis
+                </Typography>
                 <Box paddingTop={2}>
                   <Badge active={status.redisConnected}>
                     {status.redisConnected ? 'Connected' : 'Disconnected'}
@@ -92,7 +100,9 @@ const HomePage = () => {
 
           <Grid.Item col={4} s={6} xs={12}>
             <Box padding={5} hasRadius background="neutral0" shadow="tableShadow">
-              <Typography variant="sigma" textColor="neutral600">Default Limits</Typography>
+              <Typography variant="sigma" textColor="neutral600">
+                Default Limits
+              </Typography>
               <Box paddingTop={2}>
                 <Typography variant="omega" fontWeight="bold">
                   {status.defaults.limit} requests / {status.defaults.interval}
@@ -103,19 +113,26 @@ const HomePage = () => {
 
           <Grid.Item col={4} s={6} xs={12}>
             <Box padding={5} hasRadius background="neutral0" shadow="tableShadow">
-              <Typography variant="sigma" textColor="neutral600">Custom Rules</Typography>
+              <Typography variant="sigma" textColor="neutral600">
+                Custom Rules
+              </Typography>
               <Box paddingTop={2}>
-                <Typography variant="omega" fontWeight="bold">{status.rulesCount}</Typography>
+                <Typography variant="omega" fontWeight="bold">
+                  {status.rulesCount}
+                </Typography>
               </Box>
             </Box>
           </Grid.Item>
 
           <Grid.Item col={4} s={6} xs={12}>
             <Box padding={5} hasRadius background="neutral0" shadow="tableShadow">
-              <Typography variant="sigma" textColor="neutral600">Allowlists</Typography>
+              <Typography variant="sigma" textColor="neutral600">
+                Allowlists
+              </Typography>
               <Box paddingTop={2}>
                 <Typography variant="omega">
-                  IPs: {status.allowlistCounts.ips} | Tokens: {status.allowlistCounts.tokens} | Users: {status.allowlistCounts.users}
+                  IPs: {status.allowlistCounts.ips} | Tokens: {status.allowlistCounts.tokens} |
+                  Users: {status.allowlistCounts.users}
                 </Typography>
               </Box>
             </Box>
