@@ -68,10 +68,10 @@
     "kind": "plugin",
     "name": "strapi-plugin-rate-limit",
     "displayName": "Strapi Rate Limiter",
-    "description": ""
+    "description": "Production-ready rate limiting for Strapi 5 — IP-based, identity-aware, with optional Redis backing"
   },
   "name": "strapi-plugin-rate-limit",
-  "description": "",
+  "description": "Production-ready rate limiting for Strapi 5 — IP-based, identity-aware, with optional Redis backing",
   "license": "MIT",
   "author": "bolg55 <kellen.bolger@strapi.io>"
 }
