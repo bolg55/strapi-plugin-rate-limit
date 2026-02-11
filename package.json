@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "keywords": [
     "strapi",
     "strapi-plugin",
@@ -84,5 +84,5 @@
   "name": "strapi-plugin-rate-limit",
   "description": "Production-ready rate limiting for Strapi 5 — IP-based, identity-aware, with optional Redis backing",
   "license": "MIT",
-  "author": "bolg55 <kellen.bolger@strapi.io>"
+  "author": "bolg55 <bolger.kellen@gmail.com>"
 }
