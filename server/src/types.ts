@@ -14,6 +14,7 @@ export interface PluginConfig {
   execEvenlyMinDelayMs: number;
   burst: { enabled: boolean; points: number; duration: string };
   maskClientIps: boolean;
+  adminPollInterval: string;
 }
 
 export interface RateLimitRule {
@@ -42,6 +43,7 @@ export interface PluginStatus {
   defaults: { limit: number; interval: string };
   rulesCount: number;
   allowlistCounts: { ips: number; tokens: number; users: number };
+  pollIntervalMs: number;
 }
 
 export type RateLimitEventType = 'blocked' | 'warning';
@@ -71,5 +73,6 @@ export interface RateLimiterService {
   shouldWarn(key: string, consumedPoints: number, limit: number, windowDurationMs: number): boolean;
   recordEvent(event: Omit<RateLimitEvent, 'id' | 'timestamp'>): void;
   getRecentEvents(): { events: RateLimitEvent[]; total: number; capacity: number };
+  clearEvents(): void;
   disconnect(): void;
 }

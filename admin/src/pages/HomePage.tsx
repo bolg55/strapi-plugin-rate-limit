@@ -14,7 +14,10 @@ import {
   Th,
   Td,
   EmptyStateLayout,
+  Button,
+  Dialog,
 } from '@strapi/design-system';
+import { WarningCircle } from '@strapi/icons';
 import { Layouts, useFetchClient } from '@strapi/strapi/admin';
 import type { PluginStatus, RateLimitEvent } from '../../../server/src/types';
 
@@ -24,14 +27,17 @@ interface EventsData {
   capacity: number;
 }
 
-const POLL_INTERVAL = 10_000;
+const DEFAULT_POLL_MS = 10_000;
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString();
 }
 
-function formatResetIn(ms: number): string {
-  const seconds = Math.round(ms / 1000);
+function formatResetIn(timestamp: string, msBeforeNext: number): string {
+  const resetAt = new Date(timestamp).getTime() + msBeforeNext;
+  const remaining = resetAt - Date.now();
+  if (remaining <= 0) return 'Expired';
+  const seconds = Math.round(remaining / 1000);
   if (seconds < 60) return `${seconds}s`;
   return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 }
@@ -41,8 +47,19 @@ const HomePage = () => {
   const [eventsData, setEventsData] = useState<EventsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { get } = useFetchClient();
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [, setTick] = useState(0);
+  const { get, del } = useFetchClient();
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const handleClearEvents = useCallback(async () => {
+    try {
+      await del('/strapi-plugin-rate-limit/events');
+      setEventsData({ events: [], total: 0, capacity: eventsData?.capacity ?? 100 });
+    } catch {
+      // Silently ignore — next poll will refresh
+    }
+  }, [del, eventsData?.capacity]);
 
   const fetchAll = useCallback(
     async (silent: boolean) => {
@@ -67,13 +84,23 @@ const HomePage = () => {
     [get]
   );
 
+  // Data polling — interval driven by server config
   useEffect(() => {
     fetchAll(false);
-    timerRef.current = setInterval(() => fetchAll(true), POLL_INTERVAL);
+    const pollMs = status?.pollIntervalMs ?? DEFAULT_POLL_MS;
+    pollTimerRef.current = setInterval(() => fetchAll(true), pollMs);
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  }, [fetchAll]);
+  }, [fetchAll, status?.pollIntervalMs]);
+
+  // 1s tick to keep "Resets In" countdowns live
+  useEffect(() => {
+    tickTimerRef.current = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => {
+      if (tickTimerRef.current) clearInterval(tickTimerRef.current);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -190,7 +217,7 @@ const HomePage = () => {
 
         {/* Events section */}
         <Box paddingTop={8}>
-          <Flex gap={2} alignItems="baseline" paddingBottom={4}>
+          <Flex gap={2} alignItems="center" paddingBottom={4}>
             <Typography variant="beta" tag="h2">
               Recent Events
             </Typography>
@@ -198,6 +225,32 @@ const HomePage = () => {
               <Typography variant="pi" textColor="neutral600">
                 {Math.min(eventsData.total, eventsData.capacity)}/{eventsData.capacity} buffered
               </Typography>
+            )}
+            {events.length > 0 && (
+              <Dialog.Root>
+                <Dialog.Trigger>
+                  <Button variant="danger-light" size="S">
+                    Clear
+                  </Button>
+                </Dialog.Trigger>
+                <Dialog.Content>
+                  <Dialog.Header>Clear all events</Dialog.Header>
+                  <Dialog.Body icon={<WarningCircle fill="danger600" />}>
+                    Are you sure you want to clear all recorded rate limit events? This cannot be
+                    undone.
+                  </Dialog.Body>
+                  <Dialog.Footer>
+                    <Dialog.Cancel>
+                      <Button variant="tertiary">Cancel</Button>
+                    </Dialog.Cancel>
+                    <Dialog.Action>
+                      <Button variant="danger" onClick={handleClearEvents}>
+                        Clear events
+                      </Button>
+                    </Dialog.Action>
+                  </Dialog.Footer>
+                </Dialog.Content>
+              </Dialog.Root>
             )}
           </Flex>
 
@@ -257,7 +310,7 @@ const HomePage = () => {
                     </Td>
                     <Td>
                       <Typography textColor="neutral800">
-                        {formatResetIn(event.msBeforeNext)}
+                        {formatResetIn(event.timestamp, event.msBeforeNext)}
                       </Typography>
                     </Td>
                   </Tr>

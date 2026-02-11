@@ -17,6 +17,7 @@ function makeConfig(overrides: Partial<PluginConfig> = {}): PluginConfig {
     execEvenlyMinDelayMs: 0,
     burst: { enabled: false, points: 0, duration: '10s' },
     maskClientIps: true,
+    adminPollInterval: '10s',
     ...overrides,
   };
 }

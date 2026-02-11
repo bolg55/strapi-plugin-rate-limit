@@ -53,6 +53,7 @@ export default {
       duration: '10s',
     },
     maskClientIps: true,
+    adminPollInterval: '10s',
   }),
 
   validator(config: PluginConfig): void {
@@ -227,6 +228,15 @@ export default {
     if (typeof config.maskClientIps !== 'boolean') {
       throw new Error(
         `${PREFIX} maskClientIps must be a boolean. Got ${typeof config.maskClientIps}.`
+      );
+    }
+
+    // adminPollInterval
+    validateMsInterval(config.adminPollInterval, 'adminPollInterval');
+    const pollMs = ms(config.adminPollInterval as ms.StringValue);
+    if (pollMs < 1000) {
+      throw new Error(
+        `${PREFIX} adminPollInterval must be at least 1s. Got '${config.adminPollInterval}'.`
       );
     }
 

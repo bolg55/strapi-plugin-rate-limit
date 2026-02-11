@@ -22,6 +22,13 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
 
     ctx.body = { data: result };
   },
+
+  async clearEvents(ctx) {
+    const service = getRateLimiterService(strapi);
+    service.clearEvents();
+    ctx.status = 204;
+    ctx.body = null;
+  },
 });
 
 export default controller;

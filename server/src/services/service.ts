@@ -307,6 +307,7 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
           tokens: config?.allowlist.tokens.length ?? 0,
           users: config?.allowlist.users.length ?? 0,
         },
+        pollIntervalMs: config ? ms(config.adminPollInterval as ms.StringValue) : 10_000,
       };
     },
 
@@ -379,6 +380,12 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
         if (entry) events.push(entry);
       }
       return { events, total: eventTotal, capacity: EVENT_BUFFER_CAPACITY };
+    },
+
+    clearEvents(): void {
+      eventBuffer.fill(null);
+      eventWriteIndex = 0;
+      eventTotal = 0;
     },
 
     disconnect(): void {

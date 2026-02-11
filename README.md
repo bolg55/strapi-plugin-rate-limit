@@ -117,6 +117,9 @@ export default ({ env }) => ({
 
       // Mask client IPs in admin dashboard events (last octet replaced with ***)
       maskClientIps: true,
+
+      // How often the admin dashboard polls for new data
+      adminPollInterval: '10s',
     },
   },
 });
@@ -218,6 +221,7 @@ Fast local blocking layer for Redis mode. When a client far exceeds the limit, s
 | `execEvenly`           | `boolean` | `false` | Distribute delay evenly across requests instead of all at once      |
 | `execEvenlyMinDelayMs` | `number`  | `0`     | Minimum delay (ms) between requests when `execEvenly` is on         |
 | `maskClientIps`        | `boolean` | `true`  | Mask client IPs in admin dashboard events (last octet → `***`)      |
+| `adminPollInterval`    | `string`  | `'10s'` | How often the admin dashboard polls for updated status and events   |
 
 #### `burst`
 

@@ -17,5 +17,13 @@ export default () => ({
         policies: ['admin::isAuthenticatedAdmin'],
       },
     },
+    {
+      method: 'DELETE',
+      path: '/events',
+      handler: 'controller.clearEvents',
+      config: {
+        policies: ['admin::isAuthenticatedAdmin'],
+      },
+    },
   ],
 });
