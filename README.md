@@ -44,7 +44,7 @@ That's it. The global middleware registers automatically and applies to all `/ap
 
 ## Configuration
 
-All options are optional. Pass them under `config`:
+All options are optional. Pass them under `config`. Below is a **full example** showing every available option with example values — in practice you only need to include the options you want to change from the defaults.
 
 `./config/plugins.ts`
 
@@ -53,27 +53,67 @@ export default ({ env }) => ({
   'strapi-plugin-rate-limit': {
     enabled: true,
     config: {
+      // Global defaults applied to all routes unless overridden by a rule
       defaults: {
-        limit: 100,
-        interval: '1m',
-        blockDuration: 0,
+        limit: 100, // requests allowed per interval
+        interval: '1m', // time window ('30s', '1m', '5m', '1h', etc.)
+        blockDuration: 0, // seconds to block after limit exceeded (0 = no extra block)
       },
+
+      // Redis — omit entirely to use in-memory store
+      // Provide either `url` OR `host`/`port`, not both
       redis: {
-        url: env('REDIS_URL'),
-        tls: true,
+        url: env('REDIS_URL'), // e.g. 'redis://localhost:6379' or 'rediss://...'
+        // host: env('REDIS_HOST', 'localhost'),
+        // port: env.int('REDIS_PORT', 6379),
+        // password: env('REDIS_PASSWORD'),
+        tls: true, // required for Upstash, AWS ElastiCache, etc.
       },
+
+      // Per-route overrides — first matching rule wins (supports glob patterns)
       rules: [
-        { path: '/api/auth/local', limit: 5, interval: '15m' },
+        { path: '/api/auth/**', limit: 5, interval: '15m' },
         { path: '/api/upload', limit: 10, interval: '1m' },
+        { path: '/api/articles', limit: 50, interval: '1m' },
       ],
+
+      // Bypass rate limiting entirely for specific clients
       allowlist: {
-        ips: ['127.0.0.1'],
-        tokens: [],
-        users: [],
+        ips: ['127.0.0.1'], // IP addresses
+        tokens: ['3'], // API token IDs (as strings)
+        users: ['1'], // User IDs (as strings)
       },
-      exclude: ['/api/health'],
+
+      // Paths to skip entirely — no rate limiting, no headers
+      exclude: ['/api/health', '/api/metrics', '/api/webhooks/**'],
+
+      // Use CF-Connecting-IP header (when behind Cloudflare)
       cloudflare: false,
+
+      // Log a warning when a client reaches this % of their limit (0 = disabled)
       thresholdWarning: 0.8,
+
+      // Prefix for rate limiter storage keys (useful when sharing a Redis instance)
+      keyPrefix: 'rl',
+
+      // Spread request delays evenly instead of allowing bursts then blocking
+      execEvenly: false,
+      execEvenlyMinDelayMs: 0,
+
+      // In-memory blocking layer (Redis mode only) — rejects repeat offenders
+      // from memory without hitting Redis
+      inMemoryBlock: {
+        enabled: true,
+        consumedThreshold: 0, // points consumed to trigger block (0 = 2x the limit)
+        duration: '1m', // how long the in-memory block lasts
+      },
+
+      // Burst mode — secondary token bucket that allows short bursts above the limit
+      burst: {
+        enabled: false,
+        points: 10, // extra points for the burst window
+        duration: '10s', // burst window duration
+      },
     },
   },
 });
