@@ -1,6 +1,15 @@
 {
-  "version": "0.0.0",
-  "keywords": [],
+  "version": "0.1.0",
+  "keywords": [
+    "strapi",
+    "strapi-plugin",
+    "strapi5",
+    "rate-limit",
+    "rate-limiting",
+    "throttle",
+    "redis",
+    "api-security"
+  ],
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",
