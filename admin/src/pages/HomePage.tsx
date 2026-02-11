@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Main, Box, Typography, Badge, Flex, Grid, Loader } from '@strapi/design-system';
 import { useFetchClient } from '@strapi/strapi/admin';
-import { PLUGIN_ID } from '../pluginId';
-
 interface PluginStatus {
   enabled: boolean;
   strategy: 'memory' | 'redis' | 'none';
@@ -21,7 +19,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const { data } = await get(`/${PLUGIN_ID}/status`);
+        const { data } = await get(`/strapi-plugin-rate-limit/status`);
         setStatus(data.data);
       } catch (err) {
         setError('Failed to fetch plugin status.');
