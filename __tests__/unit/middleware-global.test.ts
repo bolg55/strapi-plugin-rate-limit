@@ -130,6 +130,14 @@ describe('Global Rate Limit Middleware', () => {
     expect(service.consume).not.toHaveBeenCalled();
   });
 
+  it('should bypass IPs matching CIDR allowlist', async () => {
+    service.config.allowlist.ips = ['10.0.0.0/8'];
+    const ctx = mockCtx({ ip: '10.5.5.5' });
+    await middleware(ctx, next);
+    expect(next).toHaveBeenCalled();
+    expect(service.consume).not.toHaveBeenCalled();
+  });
+
   it('should fail open on storage error (null res)', async () => {
     service.consume = vi.fn(async () => ({ allowed: true, res: null, limit: 0 }));
     const ctx = mockCtx();
@@ -210,6 +218,19 @@ describe('Global Rate Limit Middleware', () => {
       limit: 100,
       msBeforeNext: 60000,
     });
+  });
+
+  it('should pass through when service is null (pre-bootstrap race)', async () => {
+    const nullStrapi = {
+      plugin: vi.fn(() => ({
+        service: vi.fn(() => null),
+      })),
+      log: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+    } as any;
+    const nullMiddleware = createGlobalRateLimit(nullStrapi);
+    const ctx = mockCtx();
+    await nullMiddleware(ctx, next);
+    expect(next).toHaveBeenCalled();
   });
 
   it('should NOT check token/user allowlists', async () => {

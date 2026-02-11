@@ -153,6 +153,57 @@ describe('Plugin Config', () => {
       ).not.toThrow();
     });
 
+    // rules[].blockDuration
+    it('should pass for rule with valid blockDuration', () => {
+      expect(() =>
+        validator(
+          makeConfig({
+            rules: [{ path: '/api/auth/**', limit: 5, interval: '1m', blockDuration: 60 }],
+          })
+        )
+      ).not.toThrow();
+    });
+
+    it('should pass for rule with blockDuration: 0', () => {
+      expect(() =>
+        validator(
+          makeConfig({
+            rules: [{ path: '/api/auth/**', limit: 5, interval: '1m', blockDuration: 0 }],
+          })
+        )
+      ).not.toThrow();
+    });
+
+    it('should throw for rule with negative blockDuration', () => {
+      expect(() =>
+        validator(
+          makeConfig({
+            rules: [{ path: '/api/auth/**', limit: 5, interval: '1m', blockDuration: -1 }],
+          })
+        )
+      ).toThrow('rules[0].blockDuration must be a number >= 0');
+    });
+
+    it('should throw for rule with blockDuration > 86400', () => {
+      expect(() =>
+        validator(
+          makeConfig({
+            rules: [{ path: '/api/auth/**', limit: 5, interval: '1m', blockDuration: 100000 }],
+          })
+        )
+      ).toThrow('rules[0].blockDuration must be <= 86400');
+    });
+
+    it('should pass for rule without blockDuration (uses default)', () => {
+      expect(() =>
+        validator(
+          makeConfig({
+            rules: [{ path: '/api/auth/**', limit: 5, interval: '1m' }],
+          })
+        )
+      ).not.toThrow();
+    });
+
     // thresholdWarning
     it('should throw for thresholdWarning outside 0-1 range', () => {
       expect(() => validator(makeConfig({ thresholdWarning: 1.5 }))).toThrow(

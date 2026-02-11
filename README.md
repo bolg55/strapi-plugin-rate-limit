@@ -72,14 +72,14 @@ export default ({ env }) => ({
 
       // Per-route overrides — first matching rule wins (supports glob patterns)
       rules: [
-        { path: '/api/auth/**', limit: 5, interval: '15m' },
+        { path: '/api/auth/**', limit: 5, interval: '15m', blockDuration: 300 },
         { path: '/api/upload', limit: 10, interval: '1m' },
         { path: '/api/articles', limit: 50, interval: '1m' },
       ],
 
       // Bypass rate limiting entirely for specific clients
       allowlist: {
-        ips: ['127.0.0.1'], // IP addresses
+        ips: ['127.0.0.1', '10.0.0.0/8'], // IP addresses or CIDR ranges
         tokens: ['3'], // API token IDs (as strings)
         users: ['1'], // User IDs (as strings)
       },
@@ -114,6 +114,9 @@ export default ({ env }) => ({
         points: 10, // extra points for the burst window
         duration: '10s', // burst window duration
       },
+
+      // Mask client IPs in admin dashboard events (last octet replaced with ***)
+      maskClientIps: true,
     },
   },
 });
@@ -145,11 +148,18 @@ When Redis is configured, the plugin automatically creates an **insurance limite
 
 #### `rules`
 
-Array of per-route overrides. Each rule requires `path`, `limit`, and `interval`. Paths support glob patterns via [picomatch](https://github.com/micromatch/picomatch).
+Array of per-route overrides. Each rule requires `path`, `limit`, and `interval`. An optional `blockDuration` can override the global default per rule. Paths support glob patterns via [picomatch](https://github.com/micromatch/picomatch).
+
+| Option          | Type     | Required | Description                                                         |
+| --------------- | -------- | -------- | ------------------------------------------------------------------- |
+| `path`          | `string` | Yes      | Glob pattern to match request paths                                 |
+| `limit`         | `number` | Yes      | Requests allowed per interval                                       |
+| `interval`      | `string` | Yes      | Time window (`'30s'`, `'1m'`, `'1h'`, etc.)                         |
+| `blockDuration` | `number` | No       | Seconds to block after limit exceeded (overrides global, max 86400) |
 
 ```ts
 rules: [
-  { path: '/api/auth/**', limit: 5, interval: '15m' },
+  { path: '/api/auth/**', limit: 5, interval: '15m', blockDuration: 300 },
   { path: '/api/articles', limit: 50, interval: '1m' },
   { path: '/api/upload', limit: 10, interval: '1m' },
 ];
@@ -159,11 +169,24 @@ The first matching rule wins. Unmatched paths fall back to `defaults`.
 
 #### `allowlist`
 
-| Option   | Type       | Default | Description                           |
-| -------- | ---------- | ------- | ------------------------------------- |
-| `ips`    | `string[]` | `[]`    | IP addresses to bypass rate limiting  |
-| `tokens` | `string[]` | `[]`    | API token IDs to bypass rate limiting |
-| `users`  | `string[]` | `[]`    | User IDs to bypass rate limiting      |
+| Option   | Type       | Default | Description                                         |
+| -------- | ---------- | ------- | --------------------------------------------------- |
+| `ips`    | `string[]` | `[]`    | IP addresses or CIDR ranges to bypass rate limiting |
+| `tokens` | `string[]` | `[]`    | API token IDs to bypass rate limiting               |
+| `users`  | `string[]` | `[]`    | User IDs to bypass rate limiting                    |
+
+The `ips` list supports both exact addresses and CIDR notation:
+
+```ts
+allowlist: {
+  ips: [
+    '127.0.0.1',        // exact IPv4
+    '10.0.0.0/8',       // IPv4 CIDR range
+    '::1',              // exact IPv6
+    '2001:db8::/32',    // IPv6 CIDR range
+  ],
+},
+```
 
 Token and user allowlisting requires the [route-level middleware](#route-level-middleware).
 
@@ -194,6 +217,7 @@ Fast local blocking layer for Redis mode. When a client far exceeds the limit, s
 | `cloudflare`           | `boolean` | `false` | Use `CF-Connecting-IP` header for client IP                         |
 | `execEvenly`           | `boolean` | `false` | Distribute delay evenly across requests instead of all at once      |
 | `execEvenlyMinDelayMs` | `number`  | `0`     | Minimum delay (ms) between requests when `execEvenly` is on         |
+| `maskClientIps`        | `boolean` | `true`  | Mask client IPs in admin dashboard events (last octet → `***`)      |
 
 #### `burst`
 
@@ -260,6 +284,9 @@ config: {
   cloudflare: true,
 }
 ```
+
+> [!WARNING]
+> When `cloudflare: true` is set, the `CF-Connecting-IP` header is trusted unconditionally. Your server **must** be exclusively behind Cloudflare, and your firewall **must** block direct access to Strapi's port from the public internet. If clients can reach Strapi directly, they can spoof this header and bypass IP-based rate limiting entirely.
 
 ## Redis Setup
 
@@ -337,6 +364,9 @@ The plugin adds a dashboard in the Strapi admin under **Plugins → Rate Limiter
 - **Disabled state** — when the plugin is not enabled, the dashboard shows a helpful message instead of an error
 
 Events are stored in an in-memory ring buffer (last 100 entries) and are recorded whenever a request is blocked (429) or crosses the warning threshold. This works with both memory and Redis strategies.
+
+> [!NOTE]
+> By default, client IPs displayed in the admin dashboard are masked (e.g. `ip:192.168.1.***`) to reduce PII exposure. Server-side logs (`strapi.log.warn`) always show the full IP. Set `maskClientIps: false` in the plugin config to show full IPs in the dashboard.
 
 ## License
 

@@ -1,5 +1,6 @@
 import ms from 'ms';
 import type { PluginConfig } from '../types';
+import { validateIpOrCidr } from '../utils/ip-match';
 
 const PREFIX = '[strapi-plugin-rate-limit]';
 
@@ -51,6 +52,7 @@ export default {
       points: 0,
       duration: '10s',
     },
+    maskClientIps: true,
   }),
 
   validator(config: PluginConfig): void {
@@ -125,6 +127,18 @@ export default {
           );
         }
         validateMsInterval(rule.interval, `rules[${i}].interval`);
+        if (rule.blockDuration !== undefined) {
+          if (typeof rule.blockDuration !== 'number' || rule.blockDuration < 0) {
+            throw new Error(
+              `${PREFIX} rules[${i}].blockDuration must be a number >= 0. Got ${rule.blockDuration}.`
+            );
+          }
+          if (rule.blockDuration > 86400) {
+            throw new Error(
+              `${PREFIX} rules[${i}].blockDuration must be <= 86400 (24 hours). Got ${rule.blockDuration}.`
+            );
+          }
+        }
       });
     }
 
@@ -143,6 +157,12 @@ export default {
 
     if (Array.isArray(config.allowlist?.ips)) {
       config.allowlist.ips = coerceToStringArray(config.allowlist.ips, 'allowlist.ips');
+      config.allowlist.ips.forEach((entry, i) => {
+        const err = validateIpOrCidr(entry);
+        if (err) {
+          throw new Error(`${PREFIX} allowlist.ips[${i}]: ${err}`);
+        }
+      });
     }
     if (Array.isArray(config.allowlist?.tokens)) {
       config.allowlist.tokens = coerceToStringArray(config.allowlist.tokens, 'allowlist.tokens');
@@ -200,6 +220,13 @@ export default {
     if (typeof config.execEvenlyMinDelayMs !== 'number' || config.execEvenlyMinDelayMs < 0) {
       throw new Error(
         `${PREFIX} execEvenlyMinDelayMs must be a number >= 0. Got ${config.execEvenlyMinDelayMs}.`
+      );
+    }
+
+    // maskClientIps
+    if (typeof config.maskClientIps !== 'boolean') {
+      throw new Error(
+        `${PREFIX} maskClientIps must be a boolean. Got ${typeof config.maskClientIps}.`
       );
     }
 

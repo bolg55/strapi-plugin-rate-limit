@@ -2,6 +2,7 @@ import type { Core } from '@strapi/strapi';
 import type { Context, Next } from 'koa';
 import { resolveClientKey } from '../utils/resolve-client-key';
 import { TOO_MANY_REQUESTS_BODY } from '../utils/constants';
+import { getRateLimiterService } from '../utils/get-service';
 
 const PREFIX = '[strapi-plugin-rate-limit]';
 
@@ -9,15 +10,18 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
   return async (ctx: Context, next: Next): Promise<void> => {
     try {
       // Get service
-      const service = strapi.plugin('strapi-plugin-rate-limit').service('rateLimiter') as any;
+      const service = getRateLimiterService(strapi);
 
       // Enabled check
       if (!service.enabled) {
         return next();
       }
 
+      // Cache config once per request to avoid repeated deep clones
+      const cfg = service.config!;
+
       // Resolve client key (three-tier identity)
-      const clientKey = resolveClientKey(ctx, service.config.cloudflare);
+      const clientKey = resolveClientKey(ctx, cfg.cloudflare);
 
       // If key starts with ip: — skip (global MW already handled IP-based limiting)
       if (clientKey.startsWith('ip:')) {
@@ -25,7 +29,7 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
       }
 
       // Token/User allowlist check
-      if (service.isAllowlisted(clientKey, service.config)) {
+      if (service.isAllowlisted(clientKey, cfg)) {
         return next();
       }
 

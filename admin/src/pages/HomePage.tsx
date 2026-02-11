@@ -16,27 +16,7 @@ import {
   EmptyStateLayout,
 } from '@strapi/design-system';
 import { Layouts, useFetchClient } from '@strapi/strapi/admin';
-
-interface PluginStatus {
-  enabled: boolean;
-  strategy: 'memory' | 'redis' | 'none';
-  redisConnected: boolean;
-  defaults: { limit: number; interval: string };
-  rulesCount: number;
-  allowlistCounts: { ips: number; tokens: number; users: number };
-}
-
-interface RateLimitEvent {
-  id: number;
-  timestamp: string;
-  type: 'blocked' | 'warning';
-  clientKey: string;
-  path: string;
-  source: 'global' | 'route';
-  consumedPoints: number;
-  limit: number;
-  msBeforeNext: number;
-}
+import type { PluginStatus, RateLimitEvent } from '../../../server/src/types';
 
 interface EventsData {
   events: RateLimitEvent[];

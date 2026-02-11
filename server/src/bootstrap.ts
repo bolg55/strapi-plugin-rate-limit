@@ -1,10 +1,12 @@
 import type { Core } from '@strapi/strapi';
+import type { PluginConfig } from './types';
+import { getRateLimiterService } from './utils/get-service';
 
 const PREFIX = '[strapi-plugin-rate-limit]';
 
 const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
-  const config = strapi.config.get('plugin::strapi-plugin-rate-limit') as any;
-  const service = strapi.plugin('strapi-plugin-rate-limit').service('rateLimiter') as any;
+  const config = strapi.config.get('plugin::strapi-plugin-rate-limit') as PluginConfig;
+  const service = getRateLimiterService(strapi);
 
   await service.initialize(config);
 

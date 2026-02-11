@@ -16,6 +16,7 @@ import type {
   PluginStatus,
   RateLimitEvent,
 } from '../types';
+import { isIpInAllowlist } from '../utils/ip-match';
 
 const PREFIX = '[strapi-plugin-rate-limit]';
 const MAX_WARNED_KEYS = 10000;
@@ -76,10 +77,10 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
       return strategy;
     },
 
-    // F5: Return a frozen shallow copy to prevent mutation of internal state
+    // Return a deep clone to prevent mutation of internal state
     get config(): PluginConfig | null {
       if (!config) return null;
-      return Object.freeze({ ...config });
+      return structuredClone(config);
     },
 
     async initialize(pluginConfig: PluginConfig): Promise<void> {
@@ -159,8 +160,8 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
           // Connect explicitly (since lazyConnect: true)
           await redisClient.connect();
 
-          // Shared insurance limiter
-          const insuranceLimiter = new RateLimiterMemory({
+          // Default insurance limiter (matches default limits)
+          const defaultInsuranceLimiter = new RateLimiterMemory({
             points: limit,
             duration: durationSeconds,
           });
@@ -176,26 +177,31 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
               ? inMemoryBlockOnConsumed
               : undefined,
             inMemoryBlockDuration: config.inMemoryBlock.enabled ? inMemoryBlockDuration : undefined,
-            insuranceLimiter,
+            insuranceLimiter: defaultInsuranceLimiter,
             ...execEvenlyOpts,
           });
           defaultLimiter = maybeBurst(defaultRedisLimiter, `${config.keyPrefix}:default`, true);
 
-          // Per-rule limiters (Redis)
+          // Per-rule limiters (Redis) — each gets its own insurance limiter with matching limits
           ruleLimiters = config.rules.map((rule, index) => {
             const ruleIntervalMs = ms(rule.interval as ms.StringValue);
             const ruleDuration = ruleIntervalMs / 1000;
+            const ruleBlockDuration = rule.blockDuration ?? blockDuration;
+            const ruleInsuranceLimiter = new RateLimiterMemory({
+              points: rule.limit,
+              duration: ruleDuration,
+            });
             const baseLimiter = new RateLimiterRedis({
               storeClient: redisClient!,
               points: rule.limit,
               duration: ruleDuration,
-              blockDuration, // F7: propagate blockDuration to per-rule limiters
+              blockDuration: ruleBlockDuration,
               keyPrefix: `${config!.keyPrefix}:rule-${index}`,
               inMemoryBlockOnConsumed: config!.inMemoryBlock.enabled ? 2 * rule.limit : undefined,
               inMemoryBlockDuration: config!.inMemoryBlock.enabled
                 ? inMemoryBlockDuration
                 : undefined,
-              insuranceLimiter,
+              insuranceLimiter: ruleInsuranceLimiter,
               ...execEvenlyOpts,
             });
             return {
@@ -222,10 +228,11 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
           ruleLimiters = config.rules.map((rule, index) => {
             const ruleIntervalMs = ms(rule.interval as ms.StringValue);
             const ruleDuration = ruleIntervalMs / 1000;
+            const ruleBlockDuration = rule.blockDuration ?? blockDuration;
             const baseLimiter = new RateLimiterMemory({
               points: rule.limit,
               duration: ruleDuration,
-              blockDuration, // F7: propagate blockDuration to per-rule limiters
+              blockDuration: ruleBlockDuration,
               keyPrefix: `${config!.keyPrefix}:rule-${index}`,
               ...execEvenlyOpts,
             });
@@ -305,7 +312,7 @@ const rateLimiter = ({ strapi }: { strapi: Core.Strapi }) => {
 
     isAllowlisted(key: string, cfg: PluginConfig): boolean {
       if (key.startsWith('ip:')) {
-        return cfg.allowlist.ips.includes(key.slice(3));
+        return isIpInAllowlist(key.slice(3), cfg.allowlist.ips);
       }
       if (key.startsWith('token:')) {
         return cfg.allowlist.tokens.includes(key.slice(6));

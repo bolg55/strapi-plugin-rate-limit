@@ -13,12 +13,14 @@ export interface PluginConfig {
   execEvenly: boolean;
   execEvenlyMinDelayMs: number;
   burst: { enabled: boolean; points: number; duration: string };
+  maskClientIps: boolean;
 }
 
 export interface RateLimitRule {
   path: string;
   limit: number;
   interval: string;
+  blockDuration?: number;
 }
 
 export interface ResolvedLimiter {
@@ -54,4 +56,20 @@ export interface RateLimitEvent {
   consumedPoints: number;
   limit: number;
   msBeforeNext: number;
+}
+
+export interface RateLimiterService {
+  readonly enabled: boolean;
+  readonly strategy: 'memory' | 'redis' | 'none';
+  readonly config: PluginConfig | null;
+  initialize(pluginConfig: PluginConfig): Promise<void>;
+  resolve(path: string): ResolvedLimiter;
+  isExcluded(path: string): boolean;
+  consume(key: string, limiter: RateLimiterAbstract, limit: number): Promise<ConsumeResult>;
+  getStatus(): PluginStatus;
+  isAllowlisted(key: string, cfg: PluginConfig): boolean;
+  shouldWarn(key: string, consumedPoints: number, limit: number, windowDurationMs: number): boolean;
+  recordEvent(event: Omit<RateLimitEvent, 'id' | 'timestamp'>): void;
+  getRecentEvents(): { events: RateLimitEvent[]; total: number; capacity: number };
+  disconnect(): void;
 }

@@ -2,6 +2,8 @@ import type { Core } from '@strapi/strapi';
 import type { Context, Next } from 'koa';
 import { resolveClientIp } from '../utils/resolve-client-ip';
 import { TOO_MANY_REQUESTS_BODY } from '../utils/constants';
+import { getRateLimiterService } from '../utils/get-service';
+import { isIpInAllowlist } from '../utils/ip-match';
 
 const PREFIX = '[strapi-plugin-rate-limit]';
 
@@ -17,11 +19,11 @@ export default function createGlobalRateLimit(strapi: Core.Strapi) {
         return next();
       }
 
-      // Get service
-      const service = strapi.plugin('strapi-plugin-rate-limit').service('rateLimiter') as any;
+      // Get service (may be null before bootstrap completes)
+      const service = getRateLimiterService(strapi);
 
-      // Enabled check
-      if (!service.enabled) {
+      // Enabled check (includes null guard for pre-bootstrap race)
+      if (!service || !service.enabled) {
         return next();
       }
 
@@ -30,11 +32,14 @@ export default function createGlobalRateLimit(strapi: Core.Strapi) {
         return next();
       }
 
-      // Resolve client IP
-      const ip = resolveClientIp(ctx, service.config.cloudflare);
+      // Cache config once per request to avoid repeated deep clones
+      const cfg = service.config!;
 
-      // IP allowlist check
-      if (service.config.allowlist.ips.includes(ip)) {
+      // Resolve client IP
+      const ip = resolveClientIp(ctx, cfg.cloudflare);
+
+      // IP allowlist check (supports exact IPs and CIDR notation)
+      if (isIpInAllowlist(ip, cfg.allowlist.ips)) {
         return next();
       }
 

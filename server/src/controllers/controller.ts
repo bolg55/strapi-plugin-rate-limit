@@ -1,14 +1,26 @@
 import type { Core } from '@strapi/strapi';
+import { getRateLimiterService } from '../utils/get-service';
+import { maskClientKey } from '../utils/mask-client-key';
 
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   async getStatus(ctx) {
-    const service = strapi.plugin('strapi-plugin-rate-limit').service('rateLimiter') as any;
+    const service = getRateLimiterService(strapi);
     ctx.body = { data: service.getStatus() };
   },
 
   async getEvents(ctx) {
-    const service = strapi.plugin('strapi-plugin-rate-limit').service('rateLimiter') as any;
-    ctx.body = { data: service.getRecentEvents() };
+    const service = getRateLimiterService(strapi);
+    const result = service.getRecentEvents();
+    const cfg = service.config;
+
+    if (cfg?.maskClientIps) {
+      result.events = result.events.map((event) => ({
+        ...event,
+        clientKey: maskClientKey(event.clientKey),
+      }));
+    }
+
+    ctx.body = { data: result };
   },
 });
 

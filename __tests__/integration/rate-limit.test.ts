@@ -21,6 +21,7 @@ function makeConfig(overrides: Partial<PluginConfig> = {}): PluginConfig {
     execEvenly: false,
     execEvenlyMinDelayMs: 0,
     burst: { enabled: false, points: 0, duration: '10s' },
+    maskClientIps: true,
     ...overrides,
   };
 }
