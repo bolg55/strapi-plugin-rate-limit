@@ -1,0 +1,1 @@
+# strapi-plugin-rate-limit
